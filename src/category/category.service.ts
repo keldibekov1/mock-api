@@ -11,8 +11,30 @@ export class CategoryService {
     return this.prisma.category.create({ data });
   }
 
-  findAll() {
-    return this.prisma.category.findMany({ include: { products: true } });
+  async findAll(query: any) {
+    const {
+      page = 1,
+      limit = 10,
+    } = query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+
+    const [items, total] = await Promise.all([
+      this.prisma.category.findMany({
+        skip,
+        take,
+        include: { products: true },
+      }),
+      this.prisma.category.count(),
+    ]);
+
+    return {
+      total,
+      skip,
+      limit: take,
+      data: items,
+    };
   }
 
   findOne(id: number) {
